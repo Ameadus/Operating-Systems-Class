@@ -1,244 +1,729 @@
-/*“I Alexander Meade al565538 affirm that this program is entirely my own work and
-that I have neither developed my code together with any another person, nor copied any code from any
-other person, nor permitted my code to be copied or otherwise used by any other person, nor have I copied,
-modified, or otherwise used programs created by others. I acknowledge that any violation of the above terms
-will be treated as academic dishonesty.”
-*/
 
-//scheduling algs FCFS SJFP RR
-
-//go imports
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"strconv"
+     "fmt"
+     "os"
+     "bufio"
+     "strconv"
 )
 
 
 var (
-	lowerCYL int       //valid lower num 
-	upperCYL       int       //valid upper num must be > than lower
-	use          string    //which alg to use 
-	cylreq      	[]int       //cylinder request 
-	initCYL        int  //inital position must be 0<init<upper
+  lowerCYL int
+  upperCYL int
+  initCYL int
+  use string
+  cylinders []Cylinder
 )
 
-//main fucntion where readin and stuff occurs
+type Cylinder struct {
+  index int
+  id int
+  complete bool
+
+}
+
 func main() {
 
-	fileRead := os.Args[1]
-	file, _ := os.Open(fileRead) //open file
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanWords) //scan in file as words
-	var currCyl int 
-	for scanner.Scan() {
-		checkStr := scanner.Text()
-		//all info save use will need to have text converted to string
-		if checkStr == "use" {
-			scanner.Scan()
-			use = scanner.Text()
-			fmt.Printf("Seek algorithm: %s\n",use)
-		}else if checkStr == "lowerCYL" {
-			scanner.Scan()
-			lowerCYL, _ = strconv.Atoi(scanner.Text())
-			fmt.Printf("\t Lower cylinder:\t %d\n",lowerCYL)
+  inputFile := os.Args[1] //input file 
+  
+  lowerCYL, upperCYL, initCYL, use, cylinders = getInput(inputFile) //read in inputs 
 
-		} else if checkStr == "upperCYL" {
-			scanner.Scan()
-			upperCYL, _ = strconv.Atoi(scanner.Text())
-			if upperCYL < lowerCYL{
-				fmt.Printf("Error upper bound not greater than lower bound")
-			}else{
-			fmt.Printf("\t Upper cylinder:\t %d\n",upperCYL)
-				}
-
-		} else if checkStr == "initCYL" {
-			scanner.Scan()
-			initCYL, _ = strconv.Atoi(scanner.Text())
-			if initCYL < 0 || initCYL > upperCYL{
-				fmt.Printf("Error inital cycle is outside of specifed range")
-			}else{
-			fmt.Printf("\t Init cylinder:\t %d\n",initCYL)
-			}
-		}else if checkStr == "cylreq"{
-			scanner.Scan()
-			currCyl, _ = strconv.Atoi(scanner.Text())
-			cylreq[currCyl] = currCyl
-			if currCyl < lowerCYL || currCyl > upperCYL{
-				fmt.Printf("Error reqested cycle is outside of specifed range")
-			} else{
-				fmt.Printf("Cylinder\t%d",currCyl) //print the request
-			}
-
-		}else if checkStr == "end"{
-			break //once end done scanning 
-		}
-	}
-
-	switch use {
-	case "fcfs":{
-			fcfs(initCYL,lowerCYL,upperCYL,cylreq)
-			break
-		}
-	case "sstf":{
-			
-			break
-		}
-	case "SCAN":{
-			break
-		}
-	case "CSCAN":{
-			break
-		}
-	case "LOOK":{
-			break
-		}
-	case "CLOOK":{
-			break
-		}
-
-	}
-}
-
-
-
-func fcfs(inital int ,lower int , upper int, requests []int ){
-	//for time < len(requests) {  //number of requests
-	traversal := 0 //set inital traversal to 0 
-	requestQ := make([]int, len(requests)) //make a queue the size of requests
-	requestQ[0] = inital //start at init value 
-	curr := inital //current location vs next 
-		//populate the request queue
-		for i := 1; i < len(requests); i++ {
-				requestQ[i] = requests[i]  //add procc to queue
-				//amount++               // added to queue knows it has things to run
-		}
-	//work the requests
-	for i:= 0; i < len(requestQ); i++{
-		curr = requestQ[i]
-		fmt.Printf("Servicing\t %d", requestQ[i])//servicing current one
-		for j:=i+1; j < len(requestQ); j++{ //need to keep vals positive 
-			if curr > requestQ[j]{
-				traversal += curr - requestQ[j]
-			} else if curr < requestQ[j]{
-					traversal += requestQ[j] - curr 
-			}
-		}
-		fmt.Printf("FCFS traversal count = %d", traversal)
-	}
-}
-
-
-func sstf(inital int ,lower int , upper int, requests []int){
-	//for time < len(requests) {  //number of requests
-	traversal := 0 //set inital traversal to 0 
-	requestQ := make([]int, len(requests)) //make a queue the size of requests
-	requestQ[0] = inital //start at init value 
-	curr := inital //current location vs next 
-		//populate the request queue
-		for i := 1; i < len(requests); i++ {
-				requestQ[i] = requests[i]  //add procc to queue
-				//amount++               // added to queue knows it has things to run
-		}
-	sortedQ := selSort(requestQ)	
-	//work the requests
-	for i:= 0; i < len(requestQ); i++{
-		curr = requestQ[i]
-		fmt.Printf("Servicing\t %d", requestQ[i])//servicing current one
-		for j:=i+1; j < len(requestQ); j++{ //need to keep vals positive 
-			if curr > requestQ[j] || sortedQ[j] < sortedQ[curr] { //if the next seek time is shorter 
-				traversal += curr - requestQ[j]
-			} else if curr < requestQ[j] || sortedQ[j] < sortedQ[curr]{
-					traversal += requestQ[j] - curr 
-			}
-		}
-		fmt.Printf("SSTF traversal count = %d", traversal)
-	}
-}
-
-func SCAN(inital int ,lower int , upper int, requests []int){
-	//for time < len(requests) {  //number of requests
-	traversal := 0 //set inital traversal to 0 
-	requestQ := make([]int, len(requests)) //make a queue the size of requests
-	requestQ[0] = inital //start at init value 
-	curr := inital //current location vs next
-	temp := inital + 1 //next value after curr  
-		//populate the request queue
-		for i := 1; i < len(requests); i++ {
-				requestQ[i] = requests[i]  //add procc to queue
-				//amount++               // added to queue knows it has things to run
-		}
-	sortedQ := selSort(requestQ) //at this point sorted from least to greatest 	
-	amount := len(requestQ)
-	for i:= curr; i >= 0 ; i--{
-		if i == 0 && amount != 0{
-			break
-		}
-		curr = requestQ[i]
-		amount--
-		fmt.Printf("Servicing\t %d", requestQ[i])//servicing current one
-		traversal += curr - requestQ[i-1]
-		//above handles from curr to 0 below should do curr+1 to end 
-		if i == 0{
-		for temp; temp < len(requestQ); temp++{ //need to keep vals positive 
-			fmt.Printf("Servicing\t %d", requestQ[temp])
-			travesal += requestQ[temp+1] - requestQ[temp] // where we go - where we are rn    
-		}
-	}
-		fmt.Printf("SCAN traversal count = %d", traversal)
-	}
-}
-
-func CSCAN(inital int ,lower int , upper int, requests []int){
+   if(use == "fcfs") {
+    fcfs(lowerCYL, upperCYL, initCYL, cylinders)
+  } else if (use == "sstf") {
+    // sstf(lowerCYL, upperCYL, initCYL, cylinders)
+  } else if (use == "scan") {
+    SCAN(lowerCYL, upperCYL, initCYL, cylinders)
+  } else if (use == "c-scan") {
+    CSCAN(lowerCYL, upperCYL, initCYL, cylinders)
+  } else if (use == "look") {
+    LOOK(lowerCYL, upperCYL, initCYL, cylinders)
+  } else if (use == "c-look") {
+    CLOOK(lowerCYL, upperCYL, initCYL, cylinders)
+  } 
 
 }
+   
 
-func LOOK(inital int ,lower int , upper int, requests []int){
 
-}
 
-func CLOOK(inital int ,lower int , upper int, requests []int){
+//read input 
+func getInput (filename string) (lower int, upper int, initial int, use string, reqList []Cylinder){
 
-}
+  reqList = make([]Cylinder, 0, 20)
+  var tempCyclinder Cylinder
 
-//selection sort 
-func selSort(reqs []int) (sortedReqs []int) {
-	sortedReqs = make([]int, len(reqs))
-	sortedReqs = reqs
-		for i := 0; i < (len(sortedReqs) - 1); i++ {
-			selNum := i
-			for j := i + 1; j < len(sortedReqs); j++ {
-				if sortedReqs[j] < sortedReqs[selNum] {
-					selNum = j
-				}
-			}
-			temp := sortedReqs[selNum]
-			sortedReqs[selNum] = sortedReqs[i]
-			sortedReqs[i] = temp
-			}
-			return sortedReqs
-}
+  //open the input file and get a pointer to it
+  file, _ := os.Open(filename)
 
-//find the min of slice 
-func Min(array []int) (int) {
-    var min int = array[0]
-    for _, value := range array {
-        if min > value {
-            min = value
-        }
+  //make a pointer for the text inside the file
+  fileScanner := bufio.NewScanner(file)
+
+  //split the file into words
+  fileScanner.Split(bufio.ScanWords)
+
+  //iterate through the words in the file
+  for fileScanner.Scan() {
+
+    //get the first word as a string and set it to word variable 
+    word := fileScanner.Text()
+
+    //break the loop if "end" is encountered in the input file
+    if(word == "end"){
+      break
     }
-    return min, max
-}	
-//find the max of slice 
-func Max(array []int) (int) {
-    var max int = array[0]
-    for _, value := range array {
-        if max < value {
-            max = value
-        }
+
+    if(word == "cylreq") {
+
+      //increment pointer
+      fileScanner.Scan()
+
+      tempCyclinder.id, _ = strconv.Atoi(fileScanner.Text())
+      
+      reqList = append(reqList, tempCyclinder)
+      
+
+    } else if(word == "use") {
+      //increment pointer
+      fileScanner.Scan()
+      //assign the algorithm name to algorithmType variable
+      use = fileScanner.Text()
+
+    } else if(word == "lowerCYL") {
+
+      //increment pointer
+          fileScanner.Scan()
+          //assign lower cylinder value to lower variable
+          lower,_ = strconv.Atoi(fileScanner.Text())
+
+        } else if(word == "upperCYL") {
+
+          //increment pointer
+          fileScanner.Scan()
+          //assign upper cylinder value to upper variable
+          upper,_ = strconv.Atoi(fileScanner.Text())
+
+        } else if(word == "initCYL"){
+
+          //increment pointer
+          fileScanner.Scan()
+          //assign initial cylinder value to initial variable
+          initial,_ = strconv.Atoi(fileScanner.Text())
+        } 
+
+  }
+
+  return lower, upper, initial, use, reqList
+}
+
+func fcfs(lower int, upper int, initial int, reqList []Cylinder)  {
+
+  fmt.Printf("Seek algorithm: FCFS\n")
+  fmt.Printf("\tLower cylinder: %5d\n", lower)
+  fmt.Printf("\tUpper cylinder: %5d\n", upper)
+  fmt.Printf("\tInit cylinder: %5d\n", initial)
+  fmt.Printf("\tCylinder requests:\n")
+
+  //print list of cylinders
+  for i:=0; i<len(reqList); i++ {
+    fmt.Printf("\t\tCylinder %5d\n", reqList[i].id)
+  }
+
+  totalRequests  := len(reqList)
+  traversal := 0
+  previousR := initial
+
+  for i := 0; i < totalRequests; i++ {
+
+    //get the current requested cylinder
+    curr := reqList[i].id
+
+    //check inbound else error 
+    if ((curr > lower) && (curr < upper)) {
+
+      //Display current cylinder under service
+      fmt.Printf("Servicing %5d\n", curr)
+
+      //calculate the traversal distance
+      traversal += Abs(curr - previousR)
+
+      //update the previous request to current request
+      previousR = curr    
+
+    } else {
+      //generate error message 
+      fmt.Printf("ERROR! Cylinder Request out of bounds!\n")
     }
-    return min, max
+
+  }
+
+  //print traversal time
+  fmt.Printf("FCFS traversal count = %d\n", traversal)
+    
+}
+//this didnt work so i deleted it lmao 
+func sstf(lower int, upper int, initial int, reqList []Cylinder){
+
+}
+
+
+func SCAN(lower int, upper int, initial int, reqList []Cylinder) {
+
+  //print initial outputs
+  fmt.Printf("Seek algorithm: SCAN\n")
+  fmt.Printf("\tLower cylinder: %5d\n", lower)
+  fmt.Printf("\tUpper cylinder: %5d\n", upper)
+  fmt.Printf("\tInit cylinder: %5d\n", initial)
+  fmt.Printf("\tCylinder requests:\n")
+
+  for i:=0; i<len(reqList); i++ {
+    fmt.Printf("\t\tCylinder %5d\n", reqList[i].id)
+  }
+
+  //inital request 
+  var currentCylinder Cylinder
+  currentCylinder.id = initial
+  reqList = append(reqList, currentCylinder)
+
+  //sort cylinders by id and get index of inital
+  reqList, current_index := getStartIndex(selSort(reqList), initial)
+  
+  //deleted intial request and reset index
+  reqList = deleteReq(reqList, currentCylinder)
+  reqList,_ = getStartIndex(selSort(reqList), initial)
+
+  traversal := 0
+  start_processing := false
+  cylinder_services_completed := 0
+  previousR := initial
+  totalRequests := len(reqList)
+
+
+  for i := lower; i < upper; i++ {
+
+    //case after inital 
+    curr := reqList[current_index].id
+
+   //only start reached inital 
+    if(i == initial) {
+      start_processing = true
+    }
+
+    if (curr > lower && curr < upper) {
+
+      if(start_processing) {
+
+        //if current cylinder has not been serviced then service it and calculate the traversal distance
+        if(!reqList[current_index].complete && cylinder_services_completed != totalRequests) {
+
+          fmt.Printf("Servicing %d\n", curr)
+
+          traversal += Abs(curr - previousR)
+          
+          previousR = curr
+
+          cylinder_services_completed++
+          reqList[current_index].complete = true
+        
+
+          //end of list but not finished
+          if(curr == reqList[totalRequests - 1].id && cylinder_services_completed != totalRequests) {
+
+            curr = upper
+
+            traversal += Abs(curr - previousR)
+
+            previousR = curr
+
+            //reverse direction from inital
+            for i := initial-1; i > lower; i-- {
+
+              curr = reqList[current_index].id
+
+              //service the cylinders not serviced
+              if(!reqList[current_index].complete && curr > lower) {  
+
+                fmt.Printf("Servicing %d\n", curr)
+
+                traversal += Abs(curr - previousR)
+
+                previousR = curr
+                
+                cylinder_services_completed++
+                reqList[current_index].complete = true
+
+              }
+
+              if((current_index > 0) && cylinder_services_completed != totalRequests) {
+                current_index--
+              } else if (cylinder_services_completed == totalRequests) {
+                break
+              } else {
+                current_index = 0
+              }
+
+            }
+
+
+          }
+
+          if((current_index != len(reqList) - 1) && cylinder_services_completed != totalRequests) {
+            current_index++
+          } else if (cylinder_services_completed == totalRequests) {
+            break
+          } else {
+            current_index = 0
+          }
+
+        } 
+
+      }
+
+    } else {
+      //display error message
+      fmt.Printf("ERROR! Cylinder Request out of bounds!\n")
+    }
+  }
+
+  //print traversal time
+  fmt.Printf("SCAN traversal count = %d\n", traversal)
+}
+
+func CSCAN(lower int, upper int, initial int, reqList []Cylinder) {
+
+  fmt.Printf("Seek algorithm: C-SCAN\n")
+  fmt.Printf("\tLower cylinder: %5d\n", lower)
+  fmt.Printf("\tUpper cylinder: %5d\n", upper)
+  fmt.Printf("\tInit cylinder: %5d\n", initial)
+  fmt.Printf("\tCylinder requests:\n")
+
+  for i:=0; i<len(reqList); i++ {
+    fmt.Printf("\t\tCylinder %5d\n", reqList[i].id)
+  }
+
+  //inital request 
+  var currentCylinder Cylinder
+  currentCylinder.id = initial
+  reqList = append(reqList, currentCylinder)
+
+  //sort cylinders by id and get index of inital
+  reqList, current_index := getStartIndex(selSort(reqList), initial)
+  
+  //deleted intial request and reset index
+  reqList = deleteReq(reqList, currentCylinder)
+  reqList,_ = getStartIndex(selSort(reqList), initial)
+
+  traversal := 0
+  start_processing := false
+  cylinder_services_completed := 0
+  previousR := initial
+  totalRequests := len(reqList)
+
+
+  for i := lower; i < upper; i++ {
+
+    //case after inital 
+    curr := reqList[current_index].id
+
+   //only start reached inital 
+    if(i == initial) {
+      start_processing = true
+    }
+
+    if (curr > lower && curr < upper) {
+
+      if(start_processing) {
+
+        //if current cylinder has not been serviced then service it and calculate the traversal distance
+        if(!reqList[current_index].complete && cylinder_services_completed != totalRequests) {
+
+          fmt.Printf("Servicing %d\n", curr)
+
+          traversal += Abs(curr - previousR)
+          previousR = curr
+
+          cylinder_services_completed++
+          reqList[current_index].complete = true
+        
+
+          //end of list but not finished
+          if(curr == reqList[totalRequests - 1].id && cylinder_services_completed != totalRequests) {
+
+            curr = upper
+
+            traversal += Abs(curr - previousR)
+            previousR = curr
+
+            //starting from 0
+            curr = lower
+            traversal += Abs(curr - previousR)
+            previousR = curr
+
+            //reverse direction from inital
+            for i := lower; i < upper; i++ {
+
+              curr = reqList[current_index].id
+
+              //service the cylinders not serviced
+              if(!reqList[current_index].complete && curr > lower) {  
+
+                fmt.Printf("Servicing %d\n", curr)
+
+                traversal += Abs(curr - previousR)
+                previousR = curr
+                
+                cylinder_services_completed++
+                reqList[current_index].complete = true
+
+              }
+
+              if((current_index != len(reqList) - 1) && cylinder_services_completed != totalRequests) {
+                current_index++
+              } else if (cylinder_services_completed == totalRequests) {
+                break
+              } else {
+                current_index = 0
+              }
+
+            }
+
+
+          }
+
+          if((current_index != len(reqList) - 1) && cylinder_services_completed != totalRequests) {
+            current_index++
+          } else if (cylinder_services_completed == totalRequests) {
+            break
+          } else {
+            current_index = 0
+          }
+
+        } 
+
+      }
+
+    } else {
+
+      //display error message
+      fmt.Printf("ERROR! Cylinder Request out of bounds!\n")
+
+    }
+
+
+  }
+
+  //print traversal time
+  fmt.Printf("C-SCAN traversal count = %d\n", traversal)
+
+}
+
+func LOOK(lower int, upper int, initial int, reqList []Cylinder) {
+
+  fmt.Printf("Seek algorithm: LOOK\n")
+  fmt.Printf("\tLower cylinder: %5d\n", lower)
+  fmt.Printf("\tUpper cylinder: %5d\n", upper)
+  fmt.Printf("\tInit cylinder: %5d\n", initial)
+  fmt.Printf("\tCylinder requests:\n")
+
+  for i:=0; i<len(reqList); i++ {
+    fmt.Printf("\t\tCylinder %5d\n", reqList[i].id)
+  }
+
+  //inital request 
+  var currentCylinder Cylinder
+  currentCylinder.id = initial
+  reqList = append(reqList, currentCylinder)
+
+  //sort cylinders by id and get index of inital
+  reqList, current_index := getStartIndex(selSort(reqList), initial)
+  
+  //deleted intial request and reset index
+  reqList = deleteReq(reqList, currentCylinder)
+  reqList,_ = getStartIndex(selSort(reqList), initial)
+
+  traversal := 0
+  start_processing := false
+  cylinder_services_completed := 0
+  previousR := initial
+  totalRequests := len(reqList)
+
+
+  for i := lower; i < upper; i++ {
+
+    //case after inital 
+    curr := reqList[current_index].id
+
+   //only start reached inital 
+    if(i == initial) {
+      start_processing = true
+    }
+
+    if (curr > lower && curr < upper) {
+
+      if(start_processing) {
+
+        //if current cylinder has not been serviced then service it and calculate the traversal distance
+        if(!reqList[current_index].complete && cylinder_services_completed != totalRequests) {
+
+          fmt.Printf("Servicing %d\n", curr)
+
+          traversal += Abs(curr - previousR)
+          
+          previousR = curr
+
+          cylinder_services_completed++
+          reqList[current_index].complete = true
+        
+
+          //end of list but not finished
+          if(curr == reqList[totalRequests - 1].id && cylinder_services_completed != totalRequests) {
+
+            //reverse direction from inital
+            for i := initial-1; i > lower; i-- {
+
+              curr = reqList[current_index].id
+
+              //service the cylinders not serviced
+              if(!reqList[current_index].complete && curr > lower) {  
+
+                fmt.Printf("Servicing %d\n", curr)
+
+                traversal += Abs(curr - previousR)
+
+                previousR = curr
+                
+                cylinder_services_completed++
+                reqList[current_index].complete = true
+
+              }
+
+              if((current_index > 0) && cylinder_services_completed != totalRequests) {
+                current_index--
+              } else if (cylinder_services_completed == totalRequests) {
+                break
+              } else {
+                current_index = 0
+              }
+
+            }
+
+
+          }
+
+          if((current_index != len(reqList) - 1) && cylinder_services_completed != totalRequests) {
+            current_index++
+          } else if (cylinder_services_completed == totalRequests) {
+            break
+          } else {
+            current_index = 0
+          }
+
+        } 
+
+      }
+
+    } else {
+
+      //display error message
+      fmt.Printf("ERROR! Cylinder Request out of bounds!\n")
+
+    }
+
+
+  }
+
+  //print traversal time
+  fmt.Printf("LOCK traversal count = %d\n", traversal)
+
+}
+
+func CLOOK(lower int, upper int, initial int, reqList []Cylinder) {
+
+  //print initial outputs
+  fmt.Printf("Seek algorithm: C-LOOK\n")
+  fmt.Printf("\tLower cylinder: %5d\n", lower)
+  fmt.Printf("\tUpper cylinder: %5d\n", upper)
+  fmt.Printf("\tInit cylinder: %5d\n", initial)
+  fmt.Printf("\tCylinder requests:\n")
+
+  for i:=0; i<len(reqList); i++ {
+    fmt.Printf("\t\tCylinder %5d\n", reqList[i].id)
+  }
+
+  //add the initially requested cylinder in the cylinder list
+  var currentCylinder Cylinder
+  currentCylinder.id = initial
+  reqList = append(reqList, currentCylinder)
+
+  //sort cylinders by id and get index of inital
+  reqList, current_index := getStartIndex(selSort(reqList), initial)
+  
+  //deleted intial request and reset index
+  reqList = deleteReq(reqList, currentCylinder)
+  reqList,_ = getStartIndex(selSort(reqList), initial)
+
+  traversal := 0
+  start_processing := false
+  cylinder_services_completed := 0
+  previousR := initial
+  totalRequests := len(reqList)
+
+
+  for i := lower; i < upper; i++ {
+
+    //case after inital 
+    curr := reqList[current_index].id
+
+   //only start reached inital 
+    if(i == initial) {
+      start_processing = true
+    }
+
+    if (curr > lower && curr < upper) {
+
+      if(start_processing) {
+
+        //if current cylinder has not been serviced then service it and calculate the traversal distance
+        if(!reqList[current_index].complete && cylinder_services_completed != totalRequests) {
+
+          fmt.Printf("Servicing %d\n", curr)
+
+          traversal += Abs(curr - previousR)
+          previousR = curr
+
+          cylinder_services_completed++
+          reqList[current_index].complete = true
+        
+
+          //end of list but not finished
+          if(curr == reqList[totalRequests - 1].id && cylinder_services_completed != totalRequests) {
+
+            //reverse direction from inital
+            for i := lower; i < upper; i++ {
+
+              curr = reqList[current_index].id
+
+              //service the cylinders not serviced
+              if(!reqList[current_index].complete && curr > lower) {  
+
+                fmt.Printf("Servicing %d\n", curr)
+
+                traversal += Abs(curr - previousR)
+                previousR = curr
+                
+                cylinder_services_completed++
+                reqList[current_index].complete = true
+
+              }
+
+              if((current_index != len(reqList) - 1) && cylinder_services_completed != totalRequests) {
+                current_index++
+              } else if (cylinder_services_completed == totalRequests) {
+                break
+              } else {
+                current_index = 0
+              }
+
+            }
+
+
+          }
+
+          if((current_index != len(reqList) - 1) && cylinder_services_completed != totalRequests) {
+            current_index++
+          } else if (cylinder_services_completed == totalRequests) {
+            break
+          } else {
+            current_index = 0
+          }
+
+        } 
+
+      }
+
+    } else {
+
+      fmt.Printf("ERROR! Cylinder Request out of bounds!\n")
+
+    }
+
+
+  }
+
+  //print traversal time
+  fmt.Printf("C-LOCK traversal count = %d\n", traversal)
+
+}
+
+func Abs(num int) int {
+  if num < 0 {
+    return -num
+  }
+  return num
+}
+
+func selSort (cylinders []Cylinder) (c []Cylinder) {
+
+  c = make([]Cylinder, 0, len(cylinders))
+  c = cylinders
+  
+  for i := 0; i < (len(c) - 1); i++ {
+
+      minIndex := i
+
+      for j := i+1; j < len(c); j++ {
+
+        if (c[j].id < c[minIndex].id) {
+
+            minIndex = j;
+        }
+        
+        
+      }
+      //swap
+      temp := c[minIndex]
+      c[minIndex] = c[i]
+      c[i] = temp
+    } 
+
+  return c
+}
+
+func getStartIndex (cylinders []Cylinder, initial int) (c []Cylinder, pos int) {
+
+  c = make([]Cylinder, 0, len(cylinders))
+  c = cylinders
+  
+  c[0].index = 0;
+  nextIndex := c[0].index
+  
+  for i := 1; i < len(c) ; i++ {
+    nextIndex++
+    c[i].index = nextIndex; 
+
+    if(c[i].id == initial) {
+      pos = c[i].index
+    }
+  } 
+
+  return c, pos
+}
+
+//remove old request 
+func deleteReq (listOfCylinderRequests []Cylinder, cylinderToBeDeleted Cylinder) (c []Cylinder) {
+
+  c = make([]Cylinder, 0, len(listOfCylinderRequests))
+  c = listOfCylinderRequests
+
+  for i:=0; i < len(c); i++ {
+
+    if(c[i].id == cylinderToBeDeleted.id) {
+      c = append(c[:i], c[i+1:]...)
+      break
+    }
+  }
+
+  return c
 }
